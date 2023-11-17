@@ -82,10 +82,17 @@ func (app *application) runGet() ([]byte, error) {
 		app.logger.Error("Error Marshalling JSON", err)
 		return nil, err
 	}
-	fileNameData := strings.Split(strings.Split(app.config.FILENAME, ".")[1], "/")
-	fileDescription := fileNameData[len(fileNameData)-1]
+	// parse the users input of -note to split out the path/filename.json
+	filePathSplit := strings.Split(app.config.FILENAME, ".")
 
-	fileName := fmt.Sprintf("%s/Request-%s-%v", app.config.LOGRESPONSE.DIRECTORY, fileDescription, time.Now().Format("2006-01-02-15:04:05.json"))
+	// -2 should ALWAYS be the filename and not json extension
+	fileNameData := filePathSplit[len(filePathSplit)-2]
+	// split out the directory "/"
+	fileNameSplit := strings.Split(fileNameData, "/")
+	// get the last item in the slice
+	requestFileName := fileNameSplit[len(fileNameSplit)-1]
+
+	fileName := fmt.Sprintf("%s/Request-%s-%v", app.config.LOGRESPONSE.DIRECTORY, requestFileName, time.Now().Format("2006-01-02-15:04:05.json"))
 	f, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
 	defer f.Close()
 
