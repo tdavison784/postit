@@ -115,12 +115,14 @@ func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	content, err := os.ReadFile(cfg.FILENAME)
 	if err != nil {
-		logger.Error("Error could not read file: ")
+		logger.Error("Error could not read file", "error", err)
+		os.Exit(1)
 	}
 
 	err = json.Unmarshal(content, &payload)
 	if err != nil {
-		logger.Error("Error parsing JSON file", err)
+		logger.Error("Error parsing JSON file", "parsing error", err)
+		os.Exit(1)
 	}
 
 	app := application{
