@@ -52,7 +52,7 @@ type application struct {
 	logger  *slog.Logger
 }
 
-func (app *application) runGet() (map[string]interface{}, error) {
+func (app *application) runGet() ([]byte, error) {
 	request, err := http.NewRequest(http.MethodGet, app.payload.URL, nil)
 
 	if err != nil {
@@ -79,22 +79,22 @@ func (app *application) runGet() (map[string]interface{}, error) {
 		app.logger.Error("Error Marshalling JSON", err)
 		return nil, err
 	}
-	f, err := os.OpenFile(fmt.Sprintf("%s/Request-%v", app.config.LOGRESPONSE.DIRECTORY, time.Now().Format("2006-01-02-15:04:05.json")),
-		os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
+	fileName := fmt.Sprintf("%s/Request-%v", app.config.LOGRESPONSE.DIRECTORY, time.Now().Format("2006-01-02-15:04:05.json"))
+	f, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
 	defer f.Close()
 
-	n, err := f.Write(content)
+	_, err = f.Write(content)
 	if err != nil {
 		app.logger.Error("Error writing data to file")
 		return nil, err
 	}
+	app.logger.Info("Successfully wrote data to ", "file", fileName)
 
 	if err != nil {
 		app.logger.Error("Error encoding json object", err)
 		return nil, err
 	}
-	app.logger.Info("Wrote data", n)
-	return m, nil
+	return content, nil
 }
 
 func main() {
@@ -116,7 +116,6 @@ func main() {
 	if err != nil {
 		logger.Error("Error parsing JSON file", err)
 	}
-	logger.Info("METHOD", payload.URL)
 
 	app := application{
 		config:  cfg,
@@ -130,7 +129,7 @@ func main() {
 		if err != nil {
 			app.logger.Error("Error in stack", err)
 		}
-		app.logger.Info("response data: ", response)
+		fmt.Println(string(response))
 
 	}
 
