@@ -56,7 +56,6 @@ type application struct {
 func (app *application) runGet() ([]byte, error) {
 
 	out, err := json.Marshal(app.payload.BODY)
-	app.logger.Info("here")
 	request, err := http.NewRequest(app.payload.METHOD, app.payload.URL, bytes.NewBuffer(out))
 
 	if err != nil {
