@@ -53,7 +53,7 @@ type application struct {
 	logger  *slog.Logger
 }
 
-func (app *application) runGet() ([]byte, error) {
+func (app *application) run() ([]byte, error) {
 
 	// encode the body parameter of the payload data to be set
 	// we need to do this so we can turn it into a buffer type to
@@ -149,7 +149,7 @@ func main() {
 		logger:  logger,
 	}
 
-	response, err := app.runGet()
+	response, err := app.run()
 	if err != nil {
 		app.logger.Error("Error in stack", err)
 	}
