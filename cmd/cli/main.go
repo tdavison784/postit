@@ -3,11 +3,13 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
 	"os"
 	"strings"
+	"time"
 )
 
 type HTTPClient interface {
@@ -52,11 +54,13 @@ type application struct {
 
 func (app *application) runGet() (map[string]interface{}, error) {
 	request, err := http.NewRequest(http.MethodGet, app.payload.URL, nil)
+
 	if err != nil {
 		app.logger.Error("Error connecting to endpoint", err)
 		return nil, err
 	}
 	response, err := Client.Do(request)
+
 	if err != nil {
 		app.logger.Error("Error took place running GET request", err)
 		return nil, err
@@ -70,12 +74,26 @@ func (app *application) runGet() (map[string]interface{}, error) {
 	}(response.Body)
 	var m map[string]interface{}
 	err = json.NewDecoder(response.Body).Decode(&m)
+	content, err := json.MarshalIndent(m, "", "\t")
+	if err != nil {
+		app.logger.Error("Error Marshalling JSON", err)
+		return nil, err
+	}
+	f, err := os.OpenFile(fmt.Sprintf("%s/Request-%v", app.config.LOGRESPONSE.DIRECTORY, time.Now().Format("2006-01-02-15:04:05.json")),
+		os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
+	defer f.Close()
+
+	n, err := f.Write(content)
+	if err != nil {
+		app.logger.Error("Error writing data to file")
+		return nil, err
+	}
 
 	if err != nil {
 		app.logger.Error("Error encoding json object", err)
 		return nil, err
 	}
-
+	app.logger.Info("Wrote data", n)
 	return m, nil
 }
 
@@ -88,7 +106,7 @@ func main() {
 	flag.Parse()
 
 	// init our new logger
-	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	content, err := os.ReadFile(cfg.FILENAME)
 	if err != nil {
 		logger.Error("Error could not read file: ")
