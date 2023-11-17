@@ -39,7 +39,7 @@ type config struct {
 type body struct {
 	METHOD      string `json:"method"`
 	URL         string `json:"url"`
-	HEADERS     []map[string]string
+	HEADERS     map[string]string
 	FORMAT      string         `json:"format"`
 	BODY        map[string]any `json:"body"`
 	CREDENTIALS struct {
@@ -128,6 +128,11 @@ func (app *application) run() ([]byte, error) {
 		// satisfy the needs of http.NewRequest body parameter
 		out, err := json.Marshal(app.payload.BODY)
 		request, err := http.NewRequest(app.payload.METHOD, app.payload.URL, bytes.NewBuffer(out))
+		if len(app.payload.HEADERS) != 0 {
+			for key, value := range app.payload.HEADERS {
+				request.Header.Add(key, value)
+			}
+		}
 
 		if err != nil {
 			app.logger.Error("Error connecting to endpoint", err)
