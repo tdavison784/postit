@@ -1,6 +1,6 @@
 {
   "method": "GET",
-  "url": "https://someurl.com",
+  "url": "http://localhost:8000/v1/healthcheck",
   "headers": [],
   "format": "json",
   "body": {"test":  "data"},
