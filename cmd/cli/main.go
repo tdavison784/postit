@@ -54,6 +54,8 @@ type application struct {
 	logger  *slog.Logger
 }
 
+type envelope map[string]any
+
 func (app *application) run() ([]byte, error) {
 
 	if app.payload.FORMAT == "form-urlencoded" {
@@ -157,15 +159,23 @@ func (app *application) run() ([]byte, error) {
 		// body data we use type interface to allow any values
 		var m map[string]interface{}
 
+		// fileData slice to hold all data that we want to write to a file
+		var fileData []byte
+
 		// Decode the API response into generic placeholder
 		err = json.NewDecoder(response.Body).Decode(&m)
+		headerContent, err := json.MarshalIndent(envelope{"response_headers": response.Header}, "", " ")
+		fileData = append(fileData, headerContent...)
 
 		// format JSON to look nice with json.MarshalIndent
-		content, err := json.MarshalIndent(m, "", "\t")
+		content, err := json.MarshalIndent(envelope{"response_body": m}, "", "\t")
 		if err != nil {
 			app.logger.Error("Error Marshalling JSON", err)
 			return nil, err
 		}
+		fileData = append(fileData, ","...)
+		fileData = append(fileData, "\n"...)
+		fileData = append(fileData, content...)
 
 		if app.config.LOGRESPONSE.ENABLED {
 			// parse the users input of -note to split out the path/filename.json
@@ -183,7 +193,9 @@ func (app *application) run() ([]byte, error) {
 			f, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
 			defer f.Close()
 
-			_, err = f.Write(content)
+			_, err = f.WriteString("[")
+			_, err = f.Write(fileData)
+			_, err = f.WriteString("]")
 			if err != nil {
 				app.logger.Error("Error writing data to file")
 				return nil, err
@@ -199,8 +211,13 @@ func (app *application) run() ([]byte, error) {
 }
 
 func main() {
+
+	// init the config struct
 	var cfg config
+
+	// init the payload struct
 	var payload body
+
 	flag.StringVar(&cfg.FILENAME, "note", "", "Path to note to post")
 	flag.BoolVar(&cfg.LOGRESPONSE.ENABLED, "log.enabled", true, "true or false to enable saved run logs")
 	flag.StringVar(&cfg.LOGRESPONSE.DIRECTORY, "log.directory", "", "Directory where you want saved runs to be stored")
