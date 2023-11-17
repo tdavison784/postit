@@ -55,6 +55,9 @@ type application struct {
 
 func (app *application) runGet() ([]byte, error) {
 
+	// encode the body parameter of the payload data to be set
+	// we need to do this so we can turn it into a buffer type to
+	// satisfy the needs of http.NewRequest body parameter
 	out, err := json.Marshal(app.payload.BODY)
 	request, err := http.NewRequest(app.payload.METHOD, app.payload.URL, bytes.NewBuffer(out))
 
@@ -75,38 +78,46 @@ func (app *application) runGet() ([]byte, error) {
 			app.logger.Error("Failed to close body closer", err)
 		}
 	}(response.Body)
+	// this assumes that we will always have a string type
+	// as the key value in the payload body
+	// since we don't know what values users may have in their
+	// body data we use type interface to allow any values
 	var m map[string]interface{}
+
+	// Decode the API response into generic placeholder
 	err = json.NewDecoder(response.Body).Decode(&m)
+
+	// format JSON to look nice with json.MarshalIndent
 	content, err := json.MarshalIndent(m, "", "\t")
 	if err != nil {
 		app.logger.Error("Error Marshalling JSON", err)
 		return nil, err
 	}
-	// parse the users input of -note to split out the path/filename.json
-	filePathSplit := strings.Split(app.config.FILENAME, ".")
 
-	// -2 should ALWAYS be the filename and not json extension
-	fileNameData := filePathSplit[len(filePathSplit)-2]
-	// split out the directory "/"
-	fileNameSplit := strings.Split(fileNameData, "/")
-	// get the last item in the slice
-	requestFileName := fileNameSplit[len(fileNameSplit)-1]
+	if app.config.LOGRESPONSE.ENABLED {
+		// parse the users input of -note to split out the path/filename.json
+		filePathSplit := strings.Split(app.config.FILENAME, ".")
 
-	fileName := fmt.Sprintf("%s/Request-%s-%v", app.config.LOGRESPONSE.DIRECTORY, requestFileName, time.Now().Format("2006-01-02-15:04:05.json"))
-	f, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
-	defer f.Close()
+		// -2 should ALWAYS be the filename and not json extension
+		fileNameData := filePathSplit[len(filePathSplit)-2]
+		// split out the directory "/"
+		fileNameSplit := strings.Split(fileNameData, "/")
+		// get the last item in the slice
+		requestFileName := fileNameSplit[len(fileNameSplit)-1]
 
-	_, err = f.Write(content)
-	if err != nil {
-		app.logger.Error("Error writing data to file")
-		return nil, err
+		fileName := fmt.Sprintf("%s/Request-%s-%v", app.config.LOGRESPONSE.DIRECTORY, requestFileName,
+			time.Now().Format("2006-01-02-15:04:05.json"))
+		f, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
+		defer f.Close()
+
+		_, err = f.Write(content)
+		if err != nil {
+			app.logger.Error("Error writing data to file")
+			return nil, err
+		}
+		app.logger.Info("Successfully wrote data to ", "file", fileName)
 	}
-	app.logger.Info("Successfully wrote data to ", "file", fileName)
 
-	if err != nil {
-		app.logger.Error("Error encoding json object", err)
-		return nil, err
-	}
 	return content, nil
 }
 
