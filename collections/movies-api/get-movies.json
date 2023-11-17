@@ -1,9 +1,9 @@
 {
-  "method": "POST",
+  "method": "GET",
   "url": "http://localhost:8000/v1/movies/",
   "headers": [],
   "format": "json",
-  "body": {"title": "Air Bud", "year": 1994, "runtime": "96 mins", "genres": ["family", "sports"]},
+  "body": {},
   "credentials":{
     "username": "test",
     "password": ""

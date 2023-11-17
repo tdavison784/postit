@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -53,7 +54,10 @@ type application struct {
 }
 
 func (app *application) runGet() ([]byte, error) {
-	request, err := http.NewRequest(http.MethodGet, app.payload.URL, nil)
+
+	out, err := json.Marshal(app.payload.BODY)
+	app.logger.Info("here")
+	request, err := http.NewRequest(app.payload.METHOD, app.payload.URL, bytes.NewBuffer(out))
 
 	if err != nil {
 		app.logger.Error("Error connecting to endpoint", err)
@@ -79,7 +83,10 @@ func (app *application) runGet() ([]byte, error) {
 		app.logger.Error("Error Marshalling JSON", err)
 		return nil, err
 	}
-	fileName := fmt.Sprintf("%s/Request-%v", app.config.LOGRESPONSE.DIRECTORY, time.Now().Format("2006-01-02-15:04:05.json"))
+	fileNameData := strings.Split(strings.Split(app.config.FILENAME, ".")[1], "/")
+	fileDescription := fileNameData[len(fileNameData)-1]
+
+	fileName := fmt.Sprintf("%s/Request-%s-%v", app.config.LOGRESPONSE.DIRECTORY, fileDescription, time.Now().Format("2006-01-02-15:04:05.json"))
 	f, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
 	defer f.Close()
 
@@ -123,14 +130,10 @@ func main() {
 		logger:  logger,
 	}
 
-	switch {
-	case strings.Contains(payload.METHOD, "GET"):
-		response, err := app.runGet()
-		if err != nil {
-			app.logger.Error("Error in stack", err)
-		}
-		fmt.Println(string(response))
-
+	response, err := app.runGet()
+	if err != nil {
+		app.logger.Error("Error in stack", err)
 	}
+	fmt.Println(string(response))
 
 }

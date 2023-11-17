@@ -1,0 +1,11 @@
+{
+  "method": "PATCH",
+  "url": "http://localhost:8000/v1/movies/6",
+  "headers": [],
+  "format": "json",
+  "body": {"title": "Air Bud", "year": 1995, "runtime": "96 mins", "genres": ["family", "sports"]},
+  "credentials":{
+    "username": "test",
+    "password": ""
+  }
+}
