@@ -1,0 +1,11 @@
+{
+  "method": "GET",
+  "url": "https://someurl.com",
+  "headers": [],
+  "format": "json",
+  "body": {"test":  "data"},
+  "credentials":{
+    "username": "test",
+    "password": ""
+  }
+}
