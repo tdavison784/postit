@@ -1,7 +1,7 @@
 {
   "method": "GET",
   "url": "http://localhost:8000/v1/movies/",
-  "headers": {},
+  "headers": {"Authorization":  "Bearer "},
   "format": "json",
   "body": {},
   "credentials":{

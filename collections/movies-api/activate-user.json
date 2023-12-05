@@ -1,0 +1,8 @@
+{
+  "method": "PUT",
+  "url": "http://localhost:8000/v1/users/activated",
+  "headers": {},
+  "format": "json",
+  "body": {"token": ""},
+  "credentials":{}
+}

@@ -1,0 +1,8 @@
+{
+  "method": "POST",
+  "url": "http://localhost:8000/v1/tokens/authenticate",
+  "headers": {},
+  "format": "json",
+  "body": {"email": "pete@example.com", "password": "pa55word"},
+  "credentials":{}
+}

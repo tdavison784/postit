@@ -1,0 +1,8 @@
+{
+  "method": "POST",
+  "url": "http://localhost:8000/v1/users",
+  "headers": {},
+  "format": "json",
+  "body": {"Name": "Alice Smith", "email": "alice", "password": "pa55"},
+  "credentials":{}
+}

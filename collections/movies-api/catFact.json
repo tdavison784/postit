@@ -1,0 +1,8 @@
+{
+  "method": "GET",
+  "url": "https://catfact.ninja/fact",
+  "headers": {},
+  "format": "json",
+  "body": {},
+  "credentials":{}
+}

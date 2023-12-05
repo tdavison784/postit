@@ -1,0 +1,8 @@
+{
+  "method": "POST",
+  "url": "http://localhost:8000/v1/token",
+  "headers": {},
+  "format": "json",
+  "body": {"email": "MickMouse@example.com"},
+  "credentials":{}
+}

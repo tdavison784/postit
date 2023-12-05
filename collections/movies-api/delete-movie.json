@@ -1,0 +1,8 @@
+{
+  "method": "DELETE",
+  "url": "http://localhost:8000/v1/movies/5",
+  "headers": {"Authorization":  "Bearer "},
+  "format": "json",
+  "body": {},
+  "credentials":{}
+}

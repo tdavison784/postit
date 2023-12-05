@@ -1,11 +1,8 @@
 {
   "method": "POST",
   "url": "http://localhost:8000/v1/movies/",
-  "headers": [],
+  "headers": {"Authorization":  "Bearer "},
   "format": "json",
-  "body": {"title": "Air Bud - Golden Retriever", "year": 1998, "runtime": "96 mins", "genres": ["family", "sports"]},
-  "credentials":{
-    "username": "test",
-    "password": ""
-  }
+  "body": {"title": "Air Bud - Volley Baller", "year": 2003, "runtime": "96 mins", "genres": ["family", "sports"]},
+  "credentials":{}
 }
