@@ -56,6 +56,33 @@ type application struct {
 
 type envelope map[string]any
 
+func (app *application) writeToFile(fileContent []byte) error {
+	// parse the users input of -note to split out the path/filename.json
+	filePathSplit := strings.Split(app.config.FILENAME, ".")
+
+	// -2 should ALWAYS be the filename and not json extension
+	fileNameData := filePathSplit[len(filePathSplit)-2]
+	// split out the directory "/"
+	fileNameSplit := strings.Split(fileNameData, "/")
+	// get the last item in the slice
+	requestFileName := fileNameSplit[len(fileNameSplit)-1]
+
+	fileName := fmt.Sprintf("%s/Request-%s-%v", app.config.LOGRESPONSE.DIRECTORY, requestFileName,
+		time.Now().Format("2006-01-02-15:04:05.json"))
+	f, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
+	defer f.Close()
+
+	_, err = f.WriteString("[")
+	_, err = f.Write(fileContent)
+	_, err = f.WriteString("]")
+	if err != nil {
+		app.logger.Error("Error writing data to file")
+		return err
+	}
+	app.logger.Info("Successfully wrote data to ", "file", fileName)
+	return nil
+}
+
 func (app *application) run() ([]byte, error) {
 
 	if app.payload.FORMAT == "form-urlencoded" {
@@ -130,6 +157,9 @@ func (app *application) run() ([]byte, error) {
 		// satisfy the needs of http.NewRequest body parameter
 		out, err := json.Marshal(app.payload.BODY)
 		request, err := http.NewRequest(app.payload.METHOD, app.payload.URL, bytes.NewBuffer(out))
+		if err != nil {
+			app.logger.Error("Error connecting to endpoint", err)
+		}
 		if len(app.payload.HEADERS) != 0 {
 			for key, value := range app.payload.HEADERS {
 				request.Header.Add(key, value)
@@ -141,6 +171,9 @@ func (app *application) run() ([]byte, error) {
 			return nil, err
 		}
 		response, err := Client.Do(request)
+		if err != nil {
+			app.logger.Error("Error took placing GET request", err)
+		}
 
 		if err != nil {
 			app.logger.Error("Error took place running GET request", err)
@@ -164,7 +197,13 @@ func (app *application) run() ([]byte, error) {
 
 		// Decode the API response into generic placeholder
 		err = json.NewDecoder(response.Body).Decode(&m)
+		if err != nil {
+			app.logger.Error("Error Unmarshalling JSON", err)
+		}
 		headerContent, err := json.MarshalIndent(envelope{"response_headers": response.Header}, "", " ")
+		if err != nil {
+			app.logger.Error("Error Marshalling JSON", err)
+		}
 		fileData = append(fileData, headerContent...)
 
 		// format JSON to look nice with json.MarshalIndent
@@ -178,29 +217,10 @@ func (app *application) run() ([]byte, error) {
 		fileData = append(fileData, content...)
 
 		if app.config.LOGRESPONSE.ENABLED {
-			// parse the users input of -note to split out the path/filename.json
-			filePathSplit := strings.Split(app.config.FILENAME, ".")
-
-			// -2 should ALWAYS be the filename and not json extension
-			fileNameData := filePathSplit[len(filePathSplit)-2]
-			// split out the directory "/"
-			fileNameSplit := strings.Split(fileNameData, "/")
-			// get the last item in the slice
-			requestFileName := fileNameSplit[len(fileNameSplit)-1]
-
-			fileName := fmt.Sprintf("%s/Request-%s-%v", app.config.LOGRESPONSE.DIRECTORY, requestFileName,
-				time.Now().Format("2006-01-02-15:04:05.json"))
-			f, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
-			defer f.Close()
-
-			_, err = f.WriteString("[")
-			_, err = f.Write(fileData)
-			_, err = f.WriteString("]")
+			err = app.writeToFile(fileData)
 			if err != nil {
-				app.logger.Error("Error writing data to file")
-				return nil, err
+				app.logger.Error("Error writing data to file", err)
 			}
-			app.logger.Info("Successfully wrote data to ", "file", fileName)
 		}
 
 		return content, nil
@@ -219,7 +239,7 @@ func main() {
 	var payload body
 
 	flag.StringVar(&cfg.FILENAME, "note", "", "Path to note to post")
-	flag.BoolVar(&cfg.LOGRESPONSE.ENABLED, "log.enabled", true, "true or false to enable saved run logs")
+	flag.BoolVar(&cfg.LOGRESPONSE.ENABLED, "log.enabled", false, "true or false to enable saved run logs")
 	flag.StringVar(&cfg.LOGRESPONSE.DIRECTORY, "log.directory", "", "Directory where you want saved runs to be stored")
 	flag.Parse()
 
